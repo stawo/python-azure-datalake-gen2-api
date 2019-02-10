@@ -1,3 +1,13 @@
+# Configuration files that contain sensitive information
+test/config.yaml
+bin/config.yaml
+
+# Other files used for debugging
+test.py
+
+# Visual studio files
+.vscode/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
