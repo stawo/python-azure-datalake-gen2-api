@@ -122,7 +122,7 @@ class ADLGen2RestApiWrapper():
 		Basic variant:
 		PUT http://{accountName}.{dnsSuffix}/{filesystem}?resource=filesystem
 
-		Other variant:
+		With optional parameters:
 		PUT http://{accountName}.{dnsSuffix}/{filesystem}?resource=filesystem&timeout={timeout}
 		'''
 		
@@ -176,7 +176,7 @@ class ADLGen2RestApiWrapper():
 		Basic variant:
 		DELETE http://{accountName}.{dnsSuffix}/{filesystem}?resource=filesystem
 
-		Other variant:
+		With optional parameters:
 		DELETE http://{accountName}.{dnsSuffix}/{filesystem}?resource=filesystem&timeout={timeout}
 		'''
 		raise NotImplementedError('This method will not be implemented, just to avoid deleting entire filesystems by mistake.')
@@ -192,7 +192,7 @@ class ADLGen2RestApiWrapper():
 		Basic variant:
 		HEAD https://{accountName}.{dnsSuffix}/{filesystem}?resource=filesystem
 
-		Other variant:
+		With optional parameters:
 		HEAD https://{accountName}.{dnsSuffix}/{filesystem}?resource=filesystem&timeout={timeout}
 		'''
 		
@@ -241,7 +241,7 @@ class ADLGen2RestApiWrapper():
 		Basic variant:
 		GET https://{accountName}.{dnsSuffix}/?resource=account
 
-		Other variant:
+		With optional parameters:
 		GET https://{accountName}.{dnsSuffix}/?resource=account&prefix={prefix}&continuation={continuation}&maxResults={maxResults}&timeout={timeout}
 		'''
 		
@@ -311,7 +311,7 @@ class ADLGen2RestApiWrapper():
 		Basic variant:
 		PUT https://{accountName}.{dnsSuffix}/{filesystem}/{path}
 		
-		Other variant:
+		With optional parameters:
 		PUT https://{accountName}.{dnsSuffix}/{filesystem}/{path}?resource={resource}&continuation={
 		"""
 		
@@ -375,7 +375,14 @@ class ADLGen2RestApiWrapper():
 	
 	def path_list(self):
 		'''
-		To Be Implemented
+		List filesystem paths and their properties.
+		https://docs.microsoft.com/en-us/rest/api/storageservices/datalakestoragegen2/path/list
+
+		Basic variant:
+		GET http://{accountName}.{dnsSuffix}/{filesystem}?recursive={recursive}&resource=filesystem
+
+		With optional parameters:
+		GET http://{accountName}.{dnsSuffix}/{filesystem}?directory={directory}&recursive={recursive}&continuation={continuation}&maxResults={maxResults}&upn={upn}&resource=filesystem&timeout={timeout}
 		'''
 		raise NotImplementedError()
 	
@@ -393,7 +400,7 @@ class ADLGen2RestApiWrapper():
 		Basic variant:
 		GET https://{accountName}.{dnsSuffix}/{filesystem}/{path}
 
-		Other variant:
+		With optional parameters:
 		GET https://{accountName}.{dnsSuffix}/{filesystem}/{path}?timeout={timeout}
 		"""
 		
@@ -458,7 +465,7 @@ class ADLGen2RestApiWrapper():
 		Basic variant:
 		PATCH http://{accountName}.{dnsSuffix}/{filesystem}/{path}?action={action}
 
-		Other variant:
+		With optional parameters:
 		PATCH http://{accountName}.{dnsSuffix}/{filesystem}/{path}?action={action}&position={position}&retainUncommittedData={retainUncommittedData}&close={close}&timeout={timeout}
 		'''
 		
