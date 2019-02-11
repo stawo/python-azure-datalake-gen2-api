@@ -373,18 +373,69 @@ class ADLGen2RestApiWrapper():
 		'''
 		raise NotImplementedError()
 	
-	def path_list(self):
+	def path_list(self
+		, filesystem
+		, recursive
+		, directory = None
+		, continuation = None
+		, maxResults = None
+		, upn = None
+		, timeout = None
+		, request_headers = None
+		):
 		'''
 		List filesystem paths and their properties.
 		https://docs.microsoft.com/en-us/rest/api/storageservices/datalakestoragegen2/path/list
 
 		Basic variant:
-		GET http://{accountName}.{dnsSuffix}/{filesystem}?recursive={recursive}&resource=filesystem
+		GET https://{accountName}.{dnsSuffix}/{filesystem}?recursive={recursive}&resource=filesystem
 
 		With optional parameters:
-		GET http://{accountName}.{dnsSuffix}/{filesystem}?directory={directory}&recursive={recursive}&continuation={continuation}&maxResults={maxResults}&upn={upn}&resource=filesystem&timeout={timeout}
+		GET https://{accountName}.{dnsSuffix}/{filesystem}?directory={directory}&recursive={recursive}&continuation={continuation}&maxResults={maxResults}&upn={upn}&resource=filesystem&timeout={timeout}
 		'''
-		raise NotImplementedError()
+		
+		url = 'https://{storage_account_name}.{azure_datalake_dns_suffix}/{filesystem}'.format(
+			storage_account_name = self.__storage_account_name
+			, azure_datalake_dns_suffix = self.__azure_datalake_dns_suffix
+			, filesystem = filesystem
+		)
+
+		sas_token = self.__account_sas_generator.generate_account(
+			services = Services.BLOB
+			, resource_types = ResourceTypes.CONTAINER
+			, permission=AccountPermissions(list=True)
+			, expiry=datetime.datetime.now(datetime.timezone.utc)+datetime.timedelta(minutes=2)
+			, start=None
+			, ip=None
+			, protocol=Protocol.HTTPS
+		)
+
+		# Create the params of the query from the sas_token
+		params = parse_qs(sas_token)
+		# Add specific params for this operation
+		# We convert `recursive` to str just in case it's boolean,
+		# and we lower it in case we pass 'True' or 'FALSE'.
+		params['resource']='filesystem'
+		params['recursive']=str(recursive).lower()
+
+		if not directory is None:
+			params['directory']=directory
+		if not continuation is None:
+			params['continuation']=continuation
+		if not maxResults is None:
+			params['maxResults']=maxResults
+		if not upn is None:
+			params['upn']=upn
+		if not timeout is None:
+			params['timeout']=timeout
+		
+		# Execute the request
+		response = requests.get(url, params=params, headers=request_headers)
+
+		# Raise an error if the response code is not a positive one
+		response.raise_for_status()
+
+		return response
 	
 	def path_read(self
 		, filesystem
@@ -432,8 +483,6 @@ class ADLGen2RestApiWrapper():
 
 		# Raise an error if the response code is not a positive one
 		response.raise_for_status()
-
-		print(response.headers)
 
 		if response.headers['Content-Type'] == 'text/plain':
 			return response.text
