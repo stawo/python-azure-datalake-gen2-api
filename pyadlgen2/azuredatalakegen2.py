@@ -188,10 +188,27 @@ class AzureDataLakeGen2():
 		
 		raise NotImplementedError()
 		
-	def file_get_properties(self):
+	def file_get_properties(self, file_path):
 		"""TODO Fill in the method description"""
 		
-		raise NotImplementedError()
+		file_path = pathlib.PurePosixPath(file_path)
+
+		if not file_path.is_absolute():
+			raise ValueError('The param [file_path] must be an absolute path. Value passed:\n{}'.format(file_path))
+
+		datalake_filesystem = file_path.parts[1]
+		datalake_file_path = file_path.relative_to(file_path.parts[0]+file_path.parts[1]) \
+			if file_path.relative_to(file_path.parts[0]+file_path.parts[1]) != pathlib.PurePosixPath('.') \
+			else None
+
+		response = self.__azure_datalake_rest_api_wrapper.path_get_properties(
+			filesystem = datalake_filesystem
+			, path = datalake_file_path
+			, upn = True
+			, action = 'getAccessControl'
+			)
+		
+		return response
 		
 	def file_set_properties(self):
 		"""TODO Fill in the method description"""
