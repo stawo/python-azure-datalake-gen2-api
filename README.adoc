@@ -1,3 +1,36 @@
-= python-azure-datalake-gen2-api =
+= Python wrapper for Azure Data Lake Gen2 REST API =
 
-Python wrapper for the REST API for Azure Data Lake Gen2
+This library is a (slighlty) quick-n-dirty wrapper for the Azure Data Lake Gen2 REST API.
+
+The reasons that brought this library to be:
+
+* Data Lake Gen2 is currently in preview
+* No official library is currently available
+* Couldn't find any unofficial library nor working example for Python
+* I would like to use Data Lake Gen2 with Apache NiFi, but I'm not good with Java, I like Python
+
+[CAUTION]
+===============================
+Please be aware that:
+
+* soon Data Lake Gen2 should move out of preview, and official libraries should be made available at that point
+* I'm not an expert Python developer, so mistakes coud be done
+* do not use this library for production systems (unless you know what you do)
+===============================
+
+Of course you are more than welcome to help me out :)
+
+:toc:
+
+== Installation ==
+
+TODO: Document installation of library.
+
+== Usage ==
+
+TODO: Document usage of library.
+
+== Links ==
+
+* https://docs.microsoft.com/en-us/rest/api/storageservices/data-lake-storage-gen2
+* 
