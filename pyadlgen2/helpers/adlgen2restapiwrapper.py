@@ -1,3 +1,12 @@
+"""TODO Fill in the module description
+
+"""
+
+# ---------------------------------------------------------------------
+
+# LIBRARIES
+
+# External Libraries
 from azure.storage.common.sharedaccesssignature import SharedAccessSignature as AccountSharedAccessSignature
 from azure.storage.blob.sharedaccesssignature import BlobSharedAccessSignature
 
@@ -16,6 +25,10 @@ import datetime
 import requests
 from urllib.parse import urlparse, parse_qs
 import json
+
+# Internal Libraries
+
+# ---------------------------------------------------------------------
 
 class ADLGen2RestApiWrapper():
 	"""
@@ -114,7 +127,7 @@ class ADLGen2RestApiWrapper():
 		, filesystem
 		, timeout = None
 	):
-		'''
+		"""
 		Create a filesystem rooted at the specified location. If the filesystem already exists, the operation fails.
 		This operation does not support conditional HTTP requests.
 		https://docs.microsoft.com/en-us/rest/api/storageservices/datalakestoragegen2/filesystem/create
@@ -124,7 +137,7 @@ class ADLGen2RestApiWrapper():
 
 		With optional parameters:
 		PUT http://{accountName}.{dnsSuffix}/{filesystem}?resource=filesystem&timeout={timeout}
-		'''
+		"""
 		
 		url = 'https://{storage_account_name}.{azure_datalake_dns_suffix}/{filesystem}'.format(
 			storage_account_name = self.__storage_account_name
@@ -159,7 +172,7 @@ class ADLGen2RestApiWrapper():
 		return True
 		
 	def filesystem_delete(self):
-		'''
+		"""
 		*NOTE*
 		This method will not be implemented, just to avoid deleting entire filesystems by mistake.
 		"From great power comes great responsibility, and frankly I don't trust myself."
@@ -178,14 +191,14 @@ class ADLGen2RestApiWrapper():
 
 		With optional parameters:
 		DELETE http://{accountName}.{dnsSuffix}/{filesystem}?resource=filesystem&timeout={timeout}
-		'''
+		"""
 		raise NotImplementedError('This method will not be implemented, just to avoid deleting entire filesystems by mistake.')
 		
 	def filesystem_get_properties(self
 		, filesystem
 		, timeout = None
 	):
-		'''
+		"""
 		All system and user-defined filesystem properties are specified in the response headers.
 		https://docs.microsoft.com/en-us/rest/api/storageservices/datalakestoragegen2/filesystem/getproperties
 
@@ -194,7 +207,7 @@ class ADLGen2RestApiWrapper():
 
 		With optional parameters:
 		HEAD https://{accountName}.{dnsSuffix}/{filesystem}?resource=filesystem&timeout={timeout}
-		'''
+		"""
 		
 		url = 'https://{storage_account_name}.{azure_datalake_dns_suffix}/{filesystem}'.format(
 			storage_account_name = self.__storage_account_name
@@ -234,7 +247,7 @@ class ADLGen2RestApiWrapper():
 		, maxResults = None
 		, timeout = None
 	):
-		'''
+		"""
 		List filesystems and their properties in given account.
 		https://docs.microsoft.com/en-us/rest/api/storageservices/datalakestoragegen2/filesystem/list
 
@@ -243,7 +256,7 @@ class ADLGen2RestApiWrapper():
 
 		With optional parameters:
 		GET https://{accountName}.{dnsSuffix}/?resource=account&prefix={prefix}&continuation={continuation}&maxResults={maxResults}&timeout={timeout}
-		'''
+		"""
 		
 		url = 'https://{storage_account_name}.{azure_datalake_dns_suffix}/'.format(
 			storage_account_name = self.__storage_account_name
@@ -286,9 +299,9 @@ class ADLGen2RestApiWrapper():
 		return json.loads(response.text)
 		
 	def filesystem_set_properties(self):
-		'''
+		"""
 		To Be Implemented
-		'''
+		"""
 		raise NotImplementedError()
 		
 	def path_create(self
@@ -356,21 +369,77 @@ class ADLGen2RestApiWrapper():
 		return response.headers
 	
 	def path_delete(self):
-		'''
+		"""
 		To Be Implemented
-		'''
+		"""
 		raise NotImplementedError()
 	
-	def path_get_properties(self):
-		'''
-		To Be Implemented
-		'''
-		raise NotImplementedError()
+	def path_get_properties(self
+		, filesystem
+		, path
+		, action = None
+		, upn = None
+		, timeout = None
+		, request_headers = None
+		):
+		"""
+		Get Properties returns all system and user defined properties for a path.
+		Get Status returns all system defined properties for a path.
+		Get Access Control List returns the access control list for a path.
+		This operation supports conditional HTTP requests.
+		https://docs.microsoft.com/en-us/rest/api/storageservices/datalakestoragegen2/path/getproperties
+
+		Basic variant:
+		HEAD https://{accountName}.{dnsSuffix}/{filesystem}/{path}
+
+		With optional parameters:
+		HEAD https://{accountName}.{dnsSuffix}/{filesystem}/{path}?action={action}&upn={upn}&timeout={timeout}
+		"""
+		
+		if path is None:
+			raise ValueError('The parameter [path] cannot be None.')
+
+		url = 'https://{storage_account_name}.{azure_datalake_dns_suffix}/{filesystem}/{path}'.format(
+			storage_account_name = self.__storage_account_name
+			, azure_datalake_dns_suffix = self.__azure_datalake_dns_suffix
+			, filesystem = filesystem
+			, path = path
+		)
+
+		sas_token = self.__account_sas_generator.generate_account(
+			services = Services.BLOB
+			, resource_types = ResourceTypes.OBJECT
+			, permission=AccountPermissions(read=True)
+			, expiry=datetime.datetime.now(datetime.timezone.utc)+datetime.timedelta(minutes=2)
+			, start=None
+			, ip=None
+			, protocol=Protocol.HTTPS
+		)
+
+		# Create the params of the query from the sas_token
+		params = parse_qs(sas_token)
+		# Add specific params for this operation
+		# We convert `recursive` to str just in case it's boolean,
+		# and we lower it in case we pass 'True' or 'FALSE'.
+		if not action is None:
+			params['action']=action
+		if not upn is None:
+			params['upn']=str(upn).lower()
+		if not timeout is None:
+			params['timeout']=timeout
+		
+		# Execute the request
+		response = requests.get(url, params=params, headers=request_headers)
+
+		# Raise an error if the response code is not a positive one
+		response.raise_for_status()
+
+		return response.headers
 	
 	def path_lease(self):
-		'''
+		"""
 		To Be Implemented
-		'''
+		"""
 		raise NotImplementedError()
 	
 	def path_list(self
@@ -383,7 +452,7 @@ class ADLGen2RestApiWrapper():
 		, timeout = None
 		, request_headers = None
 		):
-		'''
+		"""
 		List filesystem paths and their properties.
 		https://docs.microsoft.com/en-us/rest/api/storageservices/datalakestoragegen2/path/list
 
@@ -392,7 +461,7 @@ class ADLGen2RestApiWrapper():
 
 		With optional parameters:
 		GET https://{accountName}.{dnsSuffix}/{filesystem}?directory={directory}&recursive={recursive}&continuation={continuation}&maxResults={maxResults}&upn={upn}&resource=filesystem&timeout={timeout}
-		'''
+		"""
 		
 		url = 'https://{storage_account_name}.{azure_datalake_dns_suffix}/{filesystem}'.format(
 			storage_account_name = self.__storage_account_name
@@ -504,7 +573,7 @@ class ADLGen2RestApiWrapper():
 		, request_headers = None
 		, data_to_append = None
 		):
-		'''
+		"""
 		Uploads data to be appended to a file, flushes (writes) previously uploaded data to a file,
 		sets properties for a file or directory, or sets access control for a file or directory.
 		Data can only be appended to a file.
@@ -516,7 +585,7 @@ class ADLGen2RestApiWrapper():
 
 		With optional parameters:
 		PATCH http://{accountName}.{dnsSuffix}/{filesystem}/{path}?action={action}&position={position}&retainUncommittedData={retainUncommittedData}&close={close}&timeout={timeout}
-		'''
+		"""
 		
 		url = 'https://{storage_account_name}.{azure_datalake_dns_suffix}/{filesystem}/{path}'.format(
 			storage_account_name = self.__storage_account_name
