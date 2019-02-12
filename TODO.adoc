@@ -1,0 +1,10 @@
+== Things to do
+
+* Where: pyadlgen2 -> adlgen2restapiwrapper -> ADLGen2RestApiWrapper
+	+
+	Add an async function that retrieves the external IP and adds it to the REST requests. This should improve security.
+	+
+	See the following links for the implementation:
+** https://docs.python.org/3/library/asyncio-task.html#example-future-with-run-until-complete
+** https://stackoverflow.com/questions/50473113/how-to-run-async-function-forever-python
+** https://stackoverflow.com/questions/9481419/how-can-i-get-the-public-ip-using-python2-7
