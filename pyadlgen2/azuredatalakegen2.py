@@ -79,6 +79,57 @@ class AzureDataLakeGen2():
 			else:
 				raise e
 
+	def path_get_properties(self, path):
+		r"""Get the properties of the specified path.
+
+		Parameters
+		----------
+		path : str
+			Absolute path of which we want the properties.
+			The first element represents the filesystem (a.k.a container)
+			where the file is stored.
+			The last part of the path represents the name of the file.
+			We can thus see the path as:
+			/{filesystem}/{folder1}/.../{folderN}/{filename}
+
+		Returns
+		-------
+		dict
+			Returns a dict containing the properties of the
+			specified path.
+
+		Raises
+		------
+		ValueError
+			If the specified `path` is not an absolute path.
+
+		FileNotFoundError
+			If the specified `path` does not exist.
+
+		"""
+		
+		path = pathlib.PurePosixPath(path)
+
+		if not path.is_absolute():
+			raise ValueError('The param [path] must be an absolute path. Value passed:\n{}'.format(path))
+
+		datalake_filesystem = path.parts[1]
+		datalake_path = path.relative_to(path.parts[0]+path.parts[1]) \
+			if path.relative_to(path.parts[0]+path.parts[1]) != pathlib.PurePosixPath('.') \
+			else None
+
+		if not self.file_path_exists(path):
+			raise FileNotFoundError('The specified path does not exist.\n{}'.format(path))
+		
+		response = self.__azure_datalake_rest_api_wrapper.path_get_properties(
+			filesystem = datalake_filesystem
+			, path = datalake_path
+			, upn = True
+			, action = 'getStatus'
+			)
+		
+		return response
+
 	def file_create(self, file_path, file_data, file_properties, overwrite_if_exists = False):
 		r"""Create a file at the specified path with the specified data.
 
@@ -170,6 +221,8 @@ class AzureDataLakeGen2():
 			}
 		)
 
+		# TODO Set Properties
+
 		return response
 
 		
@@ -187,28 +240,6 @@ class AzureDataLakeGen2():
 		"""TODO Fill in the method description"""
 		
 		raise NotImplementedError()
-		
-	def file_get_properties(self, file_path):
-		"""TODO Fill in the method description"""
-		
-		file_path = pathlib.PurePosixPath(file_path)
-
-		if not file_path.is_absolute():
-			raise ValueError('The param [file_path] must be an absolute path. Value passed:\n{}'.format(file_path))
-
-		datalake_filesystem = file_path.parts[1]
-		datalake_file_path = file_path.relative_to(file_path.parts[0]+file_path.parts[1]) \
-			if file_path.relative_to(file_path.parts[0]+file_path.parts[1]) != pathlib.PurePosixPath('.') \
-			else None
-
-		response = self.__azure_datalake_rest_api_wrapper.path_get_properties(
-			filesystem = datalake_filesystem
-			, path = datalake_file_path
-			, upn = True
-			, action = 'getAccessControl'
-			)
-		
-		return response
 		
 	def file_set_properties(self):
 		"""TODO Fill in the method description"""
