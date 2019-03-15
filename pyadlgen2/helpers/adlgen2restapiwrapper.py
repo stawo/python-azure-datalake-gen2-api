@@ -118,8 +118,9 @@ class ADLGen2RestApiWrapper():
 		self.__storage_account_name = storage_account_name
 		self.__storage_account_key = storage_account_key
 		self.__azure_datalake_dns_suffix = 'dfs.core.windows.net'
+		self.__x_ms_version = '2018-11-09'
 
-		self.__account_sas_generator = AccountSharedAccessSignature(storage_account_name, storage_account_key)
+		self.__account_sas_generator = AccountSharedAccessSignature(storage_account_name, storage_account_key, self.__x_ms_version)
 		self.__blob_sas_generator = BlobSharedAccessSignature(storage_account_name, storage_account_key)
 	
 
@@ -394,6 +395,7 @@ class ADLGen2RestApiWrapper():
 
 		With optional parameters:
 		HEAD https://{accountName}.{dnsSuffix}/{filesystem}/{path}?action={action}&upn={upn}&timeout={timeout}
+		
 		"""
 		
 		if path is None:
@@ -429,12 +431,12 @@ class ADLGen2RestApiWrapper():
 			params['timeout']=timeout
 		
 		# Execute the request
-		response = requests.get(url, params=params, headers=request_headers)
+		response = requests.head(url, params=params, headers=request_headers)
 
 		# Raise an error if the response code is not a positive one
 		response.raise_for_status()
 
-		return response.headers
+		return dict(response.headers)
 	
 	def path_lease(self):
 		"""
