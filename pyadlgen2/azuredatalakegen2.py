@@ -26,12 +26,12 @@ class AzureDataLakeGen2():
 		
 		self.__azure_datalake_rest_api_wrapper = ADLGen2RestApiWrapper(storage_account_name, storage_account_key)
 	
-	def file_path_exists(self, file_path):
+	def path_exists(self, path):
 		"""Checks if a given path exists in the datalake.
 		
 		Parameters
 		----------
-		file_path : str
+		path : str
 			Absolute path that has to be checked.
 			The first element represents the filesystem (a.k.a container)
 			where the file is stored.
@@ -39,13 +39,13 @@ class AzureDataLakeGen2():
 			/{filesystem}/{path}
 
 			*{path}* is optional.
-			`file_path` can point to either a folder or a file, it
+			`path` can point to either a folder or a file, it
 			doesn't matter.
 
 		Returns
 		-------
 			bool
-				True if `file_path` exists, False otherwise.
+				True if `path` exists, False otherwise.
 
 		Raises
 		------
@@ -54,21 +54,21 @@ class AzureDataLakeGen2():
 
 		"""
 
-		file_path = pathlib.PurePosixPath(file_path)
+		path = pathlib.PurePosixPath(path)
 
-		if not file_path.is_absolute():
-			raise ValueError('The param [file_path] must be an absolute path. Value passed:\n{}'.format(file_path))
+		if not path.is_absolute():
+			raise ValueError('The param [path] must be an absolute path. Value passed:\n{}'.format(path))
 
-		datalake_filesystem = file_path.parts[1]
-		datalake_file_path = file_path.relative_to(file_path.parts[0]+file_path.parts[1]) \
-			if file_path.relative_to(file_path.parts[0]+file_path.parts[1]) != pathlib.PurePosixPath('.') \
+		datalake_filesystem = path.parts[1]
+		datalake_path = path.relative_to(path.parts[0]+path.parts[1]) \
+			if path.relative_to(path.parts[0]+path.parts[1]) != pathlib.PurePosixPath('.') \
 			else None
 
 		try:
 			self.__azure_datalake_rest_api_wrapper.path_list(
 				filesystem = datalake_filesystem
 				, recursive = False
-				, directory = datalake_file_path
+				, directory = datalake_path
 				)
 		
 			return True
@@ -87,10 +87,9 @@ class AzureDataLakeGen2():
 		path : str
 			Absolute path of which we want the properties.
 			The first element represents the filesystem (a.k.a container)
-			where the file is stored.
-			The last part of the path represents the name of the file.
+			where files are stored.
 			We can thus see the path as:
-			/{filesystem}/{folder1}/.../{folderN}/{filename}
+			/{filesystem}/{folder1}/.../{folderN}[/{filename}]
 
 		Returns
 		-------
@@ -118,7 +117,7 @@ class AzureDataLakeGen2():
 			if path.relative_to(path.parts[0]+path.parts[1]) != pathlib.PurePosixPath('.') \
 			else None
 
-		if not self.file_path_exists(path):
+		if not self.path_exists(path):
 			raise FileNotFoundError('The specified path does not exist.\n{}'.format(path))
 		
 		response = self.__azure_datalake_rest_api_wrapper.path_get_properties(
@@ -129,6 +128,91 @@ class AzureDataLakeGen2():
 			)
 		
 		return response
+
+	def path_is_directory(self, path):
+		r"""Checks if `path` exists and is a directory.
+
+		Parameters
+		----------
+		path : str
+			Absolute path which we want to check.
+			The first element represents the filesystem (a.k.a container)
+			where files are stored.
+			We can thus see the path as:
+			/{filesystem}/{folder1}/.../{folderN}[/{filename}]
+
+		Returns
+		-------
+		bool
+			Returns True if `path` exists and is a directory, False otherwise.
+
+		Raises
+		------
+		ValueError
+			If the specified `path` is not an absolute path.
+
+		
+		"""
+		
+		path = pathlib.PurePosixPath(path)
+
+		if not path.is_absolute():
+			raise ValueError('The param [path] must be an absolute path. Value passed:\n{}'.format(path))
+
+		datalake_filesystem = path.parts[1]
+		datalake_path = path.relative_to(path.parts[0]+path.parts[1]) \
+			if path.relative_to(path.parts[0]+path.parts[1]) != pathlib.PurePosixPath('.') \
+			else None
+
+		if not self.path_exists(path):
+			return False
+		
+		if self.path_get_properties(path)['x-ms-resource-type'] == 'directory':
+			return True
+		else:
+			return False
+
+	def path_is_file(self, path):
+		r"""Checks if `path` exists and is a file.
+
+		Parameters
+		----------
+		path : str
+			Absolute path which we want to check.
+			The first element represents the filesystem (a.k.a container)
+			where files are stored.
+			We can thus see the path as:
+			/{filesystem}/{folder1}/.../{folderN}[/{filename}]
+
+		Returns
+		-------
+		bool
+			Returns True if `path` exists and is a file, False otherwise.
+
+		Raises
+		------
+		ValueError
+			If the specified `path` is not an absolute path.
+		
+		"""
+		
+		path = pathlib.PurePosixPath(path)
+
+		if not path.is_absolute():
+			raise ValueError('The param [path] must be an absolute path. Value passed:\n{}'.format(path))
+
+		datalake_filesystem = path.parts[1]
+		datalake_path = path.relative_to(path.parts[0]+path.parts[1]) \
+			if path.relative_to(path.parts[0]+path.parts[1]) != pathlib.PurePosixPath('.') \
+			else None
+
+		if not self.path_exists(path):
+			return False
+		
+		if self.path_get_properties(path)['x-ms-resource-type'] == 'file':
+			return True
+		else:
+			return False
 
 	def file_create(self, file_path, file_data, file_properties, overwrite_if_exists = False):
 		r"""Create a file at the specified path with the specified data.
@@ -168,10 +252,14 @@ class AzureDataLakeGen2():
 
 		if not file_path.is_absolute():
 			raise ValueError('The param [file_path] must be an absolute path. Value passed:\n{}'.format(file_path))
-
-		if self.file_path_exists(file_path) and not overwrite_if_exists:
-			raise FileExistsError('The specified file_path already exists.\n{}'.format(file_path))
-
+		
+		if self.path_exists(file_path):
+			if not overwrite_if_exists:
+				raise FileExistsError('The specified file_path already exists and the param [overwrite_if_exists] is set to False.\n{}'.format(file_path))
+			
+			if not self.path_is_file(file_path):
+				raise ValueError('The specified file_path already exists and is not a file.\n{}'.format(file_path))
+			
 		# The creation of a file with the specified properties requires different
 		# calls of the API. The steps are:
 		# * create an empty file
